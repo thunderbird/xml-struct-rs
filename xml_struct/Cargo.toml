@@ -1,0 +1,14 @@
+[package]
+name = "xml_struct"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+derive = { version = "0.1.0", path = "../xml_struct_derive" }
+quick-xml = "0.31.0"
+thiserror = "1.0.56"
+
+[dev-dependencies]
+xml_struct_tests = { path = "../xml_struct_tests" }

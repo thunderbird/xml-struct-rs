@@ -1,0 +1,23 @@
+[package]
+name = "xml_struct_tests"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-xml = "0.31.0"
+thiserror = "1.0.56"
+trybuild = "1.0.89"
+xml_struct = { version = "0.1.0", path = "../xml_struct" }
+
+[[test]]
+name = "integration_tests"
+path = "integration/lib.rs"
+harness = true
+
+[[test]]
+name = "build_tests"
+path = "ui/lib.rs"
+harness = true
