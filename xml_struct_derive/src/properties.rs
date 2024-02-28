@@ -5,8 +5,7 @@
 use proc_macro2::TokenStream;
 use quote::ToTokens as _;
 use syn::{
-    punctuated::Punctuated, spanned::Spanned as _, token::Comma, Attribute, DeriveInput, Error,
-    Expr, Meta,
+    punctuated::Punctuated, spanned::Spanned as _, Attribute, DeriveInput, Error, Expr, Meta, Token,
 };
 
 use crate::MACRO_ATTRIBUTE;
@@ -70,7 +69,7 @@ impl TypeProps {
         let mut errors = Vec::default();
 
         let mut properties = TypeProps::default();
-        for meta in attr.parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)? {
+        for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
                 Meta::Path(path) => {
                     if path.is_ident("text") {
@@ -252,7 +251,7 @@ impl FieldProps {
         let mut errors = Vec::default();
 
         let mut properties = FieldProps::default();
-        for meta in attr.parse_args_with(Punctuated::<Meta, Comma>::parse_terminated)? {
+        for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
                 Meta::Path(path) => {
                     if path.is_ident("attribute") {

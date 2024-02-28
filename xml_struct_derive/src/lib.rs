@@ -13,7 +13,6 @@ use crate::serialize::{write_serialize_impl_for_enum, write_serialize_impl_for_s
 
 const MACRO_ATTRIBUTE: &str = "xml_struct";
 
-#[proc_macro_derive(XmlSerialize, attributes(xml_struct))]
 /// A macro providing automated derivation of the `XmlSerialize` and
 /// `XmlSerializeAttr` traits.
 ///
@@ -163,6 +162,7 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 ///   ```text
 ///   <foo:Field/>
 ///   ```
+#[proc_macro_derive(XmlSerialize, attributes(xml_struct))]
 pub fn derive_xml_serialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
