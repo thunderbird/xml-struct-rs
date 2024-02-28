@@ -148,7 +148,8 @@ where
 ///
 /// This is a convenience macro intended for implementing basic serialization of
 /// primitive/standard library types. This is done per-type rather than
-/// wholesale for `ToString` due to
+/// wholesale for `ToString` in order to avoid requiring that `Display` and
+/// `XmlSerialize`/`XmlSerializeAttr` share a form.
 macro_rules! impl_as_text_for {
     ($( $ty:ty ),*) => {
         $(

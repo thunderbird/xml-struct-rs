@@ -66,8 +66,11 @@ impl TypeProps {
 
         // We build a list of errors so that we can combine them later and emit
         // them all instead of quitting at the first we encounter.
-        let mut errors = Vec::default();
+        let mut errors = Vec::new();
 
+        // We start with the default set of properties, then parse the
+        // `xml_struct` attribute to change any properties which deviate from
+        // the default.
         let mut properties = TypeProps::default();
         for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
@@ -194,7 +197,7 @@ impl TypeProps {
 
             combined
         }) {
-            Some(error) => Err(error),
+            Some(err) => Err(err),
             None => Ok(properties),
         }
     }
@@ -248,8 +251,11 @@ impl FieldProps {
 
         // We build a list of errors so that we can combine them later and emit
         // them all instead of only emitting the first.
-        let mut errors = Vec::default();
+        let mut errors = Vec::new();
 
+        // We start with the default set of properties, then parse the
+        // `xml_struct` attribute to change any properties which deviate from
+        // the default.
         let mut properties = FieldProps::default();
         for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
@@ -306,7 +312,7 @@ impl FieldProps {
 
             combined
         }) {
-            Some(error) => Err(error),
+            Some(err) => Err(err),
             None => Ok(properties),
         }
     }

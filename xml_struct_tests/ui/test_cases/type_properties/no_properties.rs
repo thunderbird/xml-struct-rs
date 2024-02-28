@@ -7,7 +7,8 @@ use xml_struct::XmlSerialize;
 #[derive(XmlSerialize)]
 struct NoAttributes;
 
-// I don't know why you'd ever do this, but there's no reason for it to error.
+// There's no clear use case for this pattern at this time, but it shouldn't
+// error anyhow.
 #[derive(XmlSerialize)]
 #[xml_struct()]
 struct EmptyAttribute;

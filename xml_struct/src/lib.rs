@@ -36,7 +36,7 @@ use quick_xml::{
 };
 use thiserror::Error;
 
-pub use derive::*;
+pub use xml_struct_derive::*;
 
 /// A data structure which can be serialized as XML content nodes.
 pub trait XmlSerialize {

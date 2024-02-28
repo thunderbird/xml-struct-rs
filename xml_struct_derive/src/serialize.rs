@@ -174,14 +174,14 @@ pub(crate) fn write_serialize_impl_for_enum(
         })
         .collect();
 
-    let error = errors.into_iter().reduce(|mut acc, err| {
+    let err = errors.into_iter().reduce(|mut acc, err| {
         acc.combine(err);
 
         acc
     });
 
-    if let Some(error) = error {
-        return error.into_compile_error();
+    if let Some(err) = err {
+        return err.into_compile_error();
     }
 
     let ns_prefix = props.ns_prefix_for_variants.clone();

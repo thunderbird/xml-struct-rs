@@ -11,6 +11,7 @@ pub(crate) use properties::*;
 
 use crate::serialize::{write_serialize_impl_for_enum, write_serialize_impl_for_struct};
 
+// This value must match the `attributes` attribute for the derive macro.
 const MACRO_ATTRIBUTE: &str = "xml_struct";
 
 /// A macro providing automated derivation of the `XmlSerialize` and
