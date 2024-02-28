@@ -12,15 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "glob"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -204,10 +195,19 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 name = "xml_struct"
 version = "0.1.0"
 dependencies = [
- "derive",
  "quick-xml",
  "thiserror",
+ "xml_struct_derive",
  "xml_struct_tests",
+]
+
+[[package]]
+name = "xml_struct_derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
