@@ -171,11 +171,13 @@ pub fn derive_xml_serialize(input: proc_macro::TokenStream) -> proc_macro::Token
         Err(err) => return err.into_compile_error().into(),
     };
 
-    let ident = input.ident;
+    let DeriveInput {
+        generics, ident, ..
+    } = input;
 
     match input.data {
-        syn::Data::Struct(input) => write_serialize_impl_for_struct(ident, input, props),
-        syn::Data::Enum(input) => write_serialize_impl_for_enum(ident, input, props),
+        syn::Data::Struct(input) => write_serialize_impl_for_struct(ident, generics, input, props),
+        syn::Data::Enum(input) => write_serialize_impl_for_enum(ident, generics, input, props),
         syn::Data::Union(_) => panic!("Serializing unions as XML is unsupported"),
     }
     // `syn` and `quote` use the `proc_macro2` crate, so internally we deal in

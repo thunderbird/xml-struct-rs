@@ -6,7 +6,7 @@ mod codegen;
 
 use proc_macro2::{Ident, Literal, TokenStream};
 use quote::{format_ident, quote, ToTokens};
-use syn::{DataEnum, DataStruct};
+use syn::{DataEnum, DataStruct, Generics};
 
 use crate::{FieldProps, TypeProps};
 
@@ -19,6 +19,7 @@ use self::codegen::{
 /// and its fields.
 pub(crate) fn write_serialize_impl_for_struct(
     ident: Ident,
+    generics: Generics,
     input: DataStruct,
     props: TypeProps,
 ) -> TokenStream {
@@ -77,7 +78,7 @@ pub(crate) fn write_serialize_impl_for_struct(
         syn::Fields::Unit => vec![],
     };
 
-    generate_serialize_impl_for(ident, props, with_struct_fields(fields))
+    generate_serialize_impl_for(ident, generics, props, with_struct_fields(fields))
 }
 
 /// Generates an implementation of the `XmlSerialize` trait (and the
@@ -85,6 +86,7 @@ pub(crate) fn write_serialize_impl_for_struct(
 /// their fields.
 pub(crate) fn write_serialize_impl_for_enum(
     ident: Ident,
+    generics: Generics,
     input: DataEnum,
     props: TypeProps,
 ) -> TokenStream {
@@ -97,7 +99,7 @@ pub(crate) fn write_serialize_impl_for_enum(
             .map(|variant| variant.ident)
             .collect();
 
-        return generate_serialize_impl_for(ident, props, with_text_variants(variants));
+        return generate_serialize_impl_for(ident, generics, props, with_text_variants(variants));
     }
 
     let mut errors = Vec::new();
@@ -184,5 +186,10 @@ pub(crate) fn write_serialize_impl_for_enum(
 
     let ns_prefix = props.ns_prefix_for_variants.clone();
 
-    generate_serialize_impl_for(ident, props, with_enum_variants(variants, ns_prefix))
+    generate_serialize_impl_for(
+        ident,
+        generics,
+        props,
+        with_enum_variants(variants, ns_prefix),
+    )
 }

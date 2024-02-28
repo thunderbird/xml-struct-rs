@@ -4,6 +4,7 @@
 
 use proc_macro2::{Ident, Literal, TokenStream};
 use quote::{quote, ToTokens};
+use syn::Generics;
 
 use crate::{FieldProps, FieldRepr, TypeProps};
 
@@ -11,6 +12,7 @@ use crate::{FieldProps, FieldRepr, TypeProps};
 /// the `XmlSerializeAttr` trait.
 pub(super) fn generate_serialize_impl_for<G>(
     type_ident: Ident,
+    generics: Generics,
     props: TypeProps,
     body_generator: G,
 ) -> TokenStream
@@ -38,10 +40,12 @@ where
         as_attr_body,
     } = body_generator(&namespace_attrs);
 
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
     let attr_impl = if let Some(body) = as_attr_body {
         quote! {
             #[automatically_derived]
-            impl ::xml_struct::XmlSerializeAttr for #type_ident {
+            impl #impl_generics ::xml_struct::XmlSerializeAttr for #type_ident #ty_generics #where_clause {
                 fn serialize_as_attribute(&self, start_tag: &mut ::quick_xml::events::BytesStart, name: &str) {
                     #body
                 }
@@ -54,7 +58,7 @@ where
     // Construct the final implementation from the type-specific sets of tokens.
     quote! {
         #[automatically_derived]
-        impl ::xml_struct::XmlSerialize for #type_ident {
+        impl #impl_generics ::xml_struct::XmlSerialize for #type_ident #ty_generics #where_clause {
             #as_element_impl
 
             fn serialize_child_nodes<W: std::io::Write>(
