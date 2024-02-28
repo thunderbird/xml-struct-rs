@@ -422,7 +422,7 @@ fn generate_child_node_calls_for_fields(child_fields: Vec<Field>) -> TokenStream
                     let child_name = field_name_to_string_tokens(&field);
 
                     quote! {
-                        <#ty as XmlSerialize>::serialize_as_element(&#accessor, writer, #child_name)?;
+                        <#ty as ::xml_struct::XmlSerialize>::serialize_as_element(&#accessor, writer, #child_name)?;
                     }
                 }
 
@@ -431,7 +431,7 @@ fn generate_child_node_calls_for_fields(child_fields: Vec<Field>) -> TokenStream
                 // containing element.
                 _ => {
                     quote! {
-                        <#ty as XmlSerialize>::serialize_child_nodes(&#accessor, writer)?;
+                        <#ty as ::xml_struct::XmlSerialize>::serialize_child_nodes(&#accessor, writer)?;
                     }
                 }
             }
