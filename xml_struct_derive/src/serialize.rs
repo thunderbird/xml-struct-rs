@@ -95,7 +95,7 @@ pub(crate) fn write_serialize_impl_for_enum(
     ident: Ident,
     generics: Generics,
     input: DataEnum,
-    props: TypeProps,
+    mut props: TypeProps,
 ) -> TokenStream {
     if props.should_serialize_as_text {
         // We depend on the code which generates `TypeProps` to handle verifying
@@ -119,71 +119,7 @@ pub(crate) fn write_serialize_impl_for_enum(
     let variants = input
         .variants
         .into_iter()
-        .map(|variant| {
-            let kind = match variant.fields {
-                syn::Fields::Named(fields) => {
-                    let fields = fields
-                        .named
-                        .into_iter()
-                        .map(|field| {
-                            // We should be able to unwrap without panicking, since we
-                            // know these are named fields.
-                            let ident = field.ident.unwrap();
-                            let accessor = quote!(#ident);
-
-                            let props = FieldProps::try_from_attrs(field.attrs, true)
-                                .unwrap_or_else(|err| {
-                                    errors.push(err);
-
-                                    FieldProps::default()
-                                });
-
-                            Field {
-                                kind: FieldKind::Named(ident),
-                                ty: field.ty.into_token_stream(),
-                                accessor,
-                                props,
-                            }
-                        })
-                        .collect();
-
-                    VariantKind::Struct(fields)
-                }
-                syn::Fields::Unnamed(fields) => {
-                    let fields = fields
-                        .unnamed
-                        .into_iter()
-                        .enumerate()
-                        .map(|(idx, field)| {
-                            let idx = Literal::usize_unsuffixed(idx);
-                            let accessor = format_ident!("field{idx}").into_token_stream();
-
-                            let props = FieldProps::try_from_attrs(field.attrs, false)
-                                .unwrap_or_else(|err| {
-                                    errors.push(err);
-
-                                    FieldProps::default()
-                                });
-
-                            Field {
-                                kind: FieldKind::Unnamed,
-                                ty: field.ty.into_token_stream(),
-                                accessor,
-                                props,
-                            }
-                        })
-                        .collect();
-
-                    VariantKind::Tuple(fields)
-                }
-                syn::Fields::Unit => VariantKind::Unit,
-            };
-
-            Variant {
-                ident: variant.ident,
-                kind,
-            }
-        })
+        .map(process_enum_variant(&mut errors))
         .collect();
 
     // Combine and return errors if there are any. If none, we've successfully
@@ -198,7 +134,9 @@ pub(crate) fn write_serialize_impl_for_enum(
         return err.into_compile_error();
     }
 
-    let ns_prefix = props.ns_prefix_for_variants.clone();
+    // Since this is enum-specific, there should be no reason for it to be used
+    // in codegen and we can just steal the memory.
+    let ns_prefix = props.ns_prefix_for_variants.take();
 
     generate_serialize_impl_for(
         ident,
@@ -206,4 +144,78 @@ pub(crate) fn write_serialize_impl_for_enum(
         props,
         with_enum_variants(variants, ns_prefix),
     )
+}
+
+/// Creates a callback for processing a `syn` enum variant into codegen details.
+fn process_enum_variant(errors: &mut Vec<syn::Error>) -> impl FnMut(syn::Variant) -> Variant + '_ {
+    |variant| {
+        // Process the variants's fields in order to determine how to represent
+        // them, based on variant type and any consumer-applied attributes.
+        let kind = match variant.fields {
+            syn::Fields::Named(fields) => {
+                let fields = fields
+                    .named
+                    .into_iter()
+                    .map(|field| {
+                        // We should be able to unwrap without panicking, since we
+                        // know these are named fields.
+                        let ident = field.ident.unwrap();
+                        let accessor = quote!(#ident);
+
+                        let props = FieldProps::try_from_attrs(field.attrs, true)
+                            .unwrap_or_else(collect_field_processing_error(errors));
+
+                        Field {
+                            kind: FieldKind::Named(ident),
+                            ty: field.ty.into_token_stream(),
+                            accessor,
+                            props,
+                        }
+                    })
+                    .collect();
+
+                VariantKind::Struct(fields)
+            }
+            syn::Fields::Unnamed(fields) => {
+                let fields = fields
+                    .unnamed
+                    .into_iter()
+                    .enumerate()
+                    .map(|(idx, field)| {
+                        let idx = Literal::usize_unsuffixed(idx);
+                        let accessor = format_ident!("field{idx}").into_token_stream();
+
+                        let props = FieldProps::try_from_attrs(field.attrs, false)
+                            .unwrap_or_else(collect_field_processing_error(errors));
+
+                        Field {
+                            kind: FieldKind::Unnamed,
+                            ty: field.ty.into_token_stream(),
+                            accessor,
+                            props,
+                        }
+                    })
+                    .collect();
+
+                VariantKind::Tuple(fields)
+            }
+            syn::Fields::Unit => VariantKind::Unit,
+        };
+
+        Variant {
+            ident: variant.ident,
+            kind,
+        }
+    }
+}
+
+/// Creates a callback for handling errors in processing field properties.
+fn collect_field_processing_error(
+    errors: &mut Vec<syn::Error>,
+) -> impl FnMut(syn::Error) -> FieldProps + '_ {
+    |err| {
+        errors.push(err);
+
+        FieldProps::default()
+    }
 }

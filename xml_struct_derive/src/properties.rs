@@ -50,13 +50,7 @@ impl TypeProps {
     /// Constructs a set of serialization properties for an enum or struct from
     /// its input to the derive macro.
     pub(crate) fn try_from_input(input: &DeriveInput) -> Result<Self, Error> {
-        // Find the attribute for configuring behavior of the derivation, if
-        // any.
-        let attr = match input
-            .attrs
-            .iter()
-            .find(|attr| attr.path().is_ident(MACRO_ATTRIBUTE))
-        {
+        let attr = match find_configuration_attribute(&input.attrs) {
             Some(attr) => attr,
 
             // If we don't find a matching attribute, we assume the default set
@@ -252,10 +246,7 @@ impl FieldProps {
     ) -> Result<Self, Error> {
         // Find the attribute for configuring behavior of the derivation, if
         // any.
-        let attr = match value
-            .into_iter()
-            .find(|attr| attr.path().is_ident(MACRO_ATTRIBUTE))
-        {
+        let attr = match find_configuration_attribute(&value) {
             Some(attr) => attr,
 
             // If we don't find a matching attribute, we assume the default set
@@ -342,4 +333,12 @@ pub(crate) enum FieldRepr {
 
     #[default]
     Element,
+}
+
+/// Gets the attribute containing configuration parameters for this derive
+/// macro, if any.
+fn find_configuration_attribute(attrs: &[Attribute]) -> Option<&Attribute> {
+    attrs
+        .iter()
+        .find(|attr| attr.path().is_ident(MACRO_ATTRIBUTE))
 }
