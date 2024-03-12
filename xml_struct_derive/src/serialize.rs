@@ -23,7 +23,10 @@ pub(crate) fn write_serialize_impl_for_struct(
     input: DataStruct,
     props: TypeProps,
 ) -> TokenStream {
+    // Process the struct's fields in order to determine how to represent them,
+    // based on struct type and any consumer-applied attributes.
     let fields = match input.fields {
+        // Fields in a regular struct, i.e. declared with a name and type.
         syn::Fields::Named(fields) => {
             let map_result: Result<Vec<Field>, syn::Error> = fields
                 .named
@@ -50,6 +53,8 @@ pub(crate) fn write_serialize_impl_for_struct(
                 Err(err) => return err.into_compile_error(),
             }
         }
+
+        // Fields in a tuple struct, i.e. declared by type and position only.
         syn::Fields::Unnamed(fields) => {
             let map_result: Result<Vec<Field>, syn::Error> = fields
                 .unnamed
@@ -75,6 +80,8 @@ pub(crate) fn write_serialize_impl_for_struct(
                 Err(err) => return err.into_compile_error(),
             }
         }
+
+        // A unit struct, i.e. one which has no fields.
         syn::Fields::Unit => vec![],
     };
 
@@ -91,8 +98,9 @@ pub(crate) fn write_serialize_impl_for_enum(
     props: TypeProps,
 ) -> TokenStream {
     if props.should_serialize_as_text {
-        // We should already have verification that this enum consists solely of
-        // unit variants, so we just collect their identifiers.
+        // We depend on the code which generates `TypeProps` to handle verifying
+        // that this enum consists solely of unit variants when setting this
+        // property, so we just collect variant identifiers.
         let variants = input
             .variants
             .into_iter()
@@ -102,8 +110,12 @@ pub(crate) fn write_serialize_impl_for_enum(
         return generate_serialize_impl_for(ident, generics, props, with_text_variants(variants));
     }
 
+    // We build a list of errors so that we can combine them later and emit
+    // them all instead of quitting at the first we encounter.
     let mut errors = Vec::new();
 
+    // Process the enum's variants in order to determine how to represent them,
+    // based on variant type and any consumer-applied attributes.
     let variants = input
         .variants
         .into_iter()
@@ -174,6 +186,8 @@ pub(crate) fn write_serialize_impl_for_enum(
         })
         .collect();
 
+    // Combine and return errors if there are any. If none, we've successfully
+    // handled all fields and can generate the final implementation.
     let err = errors.into_iter().reduce(|mut acc, err| {
         acc.combine(err);
 

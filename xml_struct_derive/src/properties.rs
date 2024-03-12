@@ -69,14 +69,19 @@ impl TypeProps {
         let mut errors = Vec::new();
 
         // We start with the default set of properties, then parse the
-        // `xml_struct` attribute to change any properties which deviate from
-        // the default.
+        // `xml_struct` attribute to modify any property which deviates from the
+        // default.
         let mut properties = TypeProps::default();
         for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
                 Meta::Path(path) => {
                     if path.is_ident("text") {
-                        let is_unit_enum = match &input.data {
+                        // The consumer has specified that they want to
+                        // represent values of the type to which this is applied
+                        // as text. This is only possible when the type is an
+                        // enum, for which all variants are unit. When that's
+                        // the case, we use the variant name as the text value.
+                        let is_unit_only_enum = match &input.data {
                             syn::Data::Enum(input) => input
                                 .variants
                                 .iter()
@@ -85,7 +90,7 @@ impl TypeProps {
                             _ => false,
                         };
 
-                        if is_unit_enum {
+                        if is_unit_only_enum {
                             properties.should_serialize_as_text = true;
                         } else {
                             // There is no clear representation of non-unit enum
@@ -102,9 +107,10 @@ impl TypeProps {
                 }
                 Meta::NameValue(name_value) => {
                     if name_value.path.is_ident("default_ns") {
-                        // When serialized as an element, values of this type should
-                        // declare a default namespace, e.g. `xmlns="foo"`. A
-                        // declaration of this type should occur at most once per type.
+                        // When serialized as an element, values of the type to
+                        // which this is applied should include a declaration of
+                        // a default namespace, e.g. `xmlns="foo"`. This
+                        // attribute should occur at most once per type.
                         match properties.default_ns_name {
                             Some(_) => {
                                 errors.push(Error::new(
@@ -119,9 +125,11 @@ impl TypeProps {
                             }
                         }
                     } else if name_value.path.is_ident("ns") {
-                        // When serialized as an element, values of this type should
-                        // declare a namespace with prefix, e.g. `xmlns:foo="bar"`.
-                        // There can be many of these declarations per type.
+                        // When serialized as an element, values of the type to
+                        // which this is applied should include a declaration of
+                        // a namespace with prefix, e.g. `xmlns:foo="bar"`.
+                        // There can be many of these attributes per type.
+                        //
                         // Ideally, we could prevent duplicate namespace prefixes here,
                         // but allowing consumers to pass either by variable or by
                         // literal makes that exceedingly difficult.
@@ -139,6 +147,9 @@ impl TypeProps {
                             )),
                         }
                     } else if name_value.path.is_ident("variant_ns_prefix") {
+                        // When serialized as an element, values of the enum
+                        // type to which this is applied should have a namespace
+                        // prefix added to the element's tag name.
                         match properties.ns_prefix_for_variants {
                             Some(_) => {
                                 errors.push(Error::new(
@@ -183,6 +194,9 @@ impl TypeProps {
         }
 
         if properties.ns_prefix_for_variants.is_some() && properties.should_serialize_as_text {
+            // Namespace prefixes are added as part of an element name and so
+            // cannot be applied to values which will be serialized as a text
+            // node.
             errors.push(Error::new(
                 attr.span(),
                 "cannot declare variant namespace prefix for text enum",
@@ -234,7 +248,7 @@ impl FieldProps {
     /// from its struct attributes.
     pub(crate) fn try_from_attrs(
         value: Vec<Attribute>,
-        is_named_field: bool,
+        field_has_name: bool,
     ) -> Result<Self, Error> {
         // Find the attribute for configuring behavior of the derivation, if
         // any.
@@ -254,14 +268,17 @@ impl FieldProps {
         let mut errors = Vec::new();
 
         // We start with the default set of properties, then parse the
-        // `xml_struct` attribute to change any properties which deviate from
-        // the default.
+        // `xml_struct` attribute to modify any property which deviates from the
+        // default.
         let mut properties = FieldProps::default();
         for meta in attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)? {
             match meta {
                 Meta::Path(path) => {
                     if path.is_ident("attribute") {
-                        if is_named_field {
+                        // The name of the field is used as the XML attribute
+                        // name, so unnamed fields (e.g., members of tuple
+                        // structs) cannot be represented as attributes.
+                        if field_has_name {
                             properties.repr = FieldRepr::Attribute;
                         } else {
                             errors.push(Error::new(

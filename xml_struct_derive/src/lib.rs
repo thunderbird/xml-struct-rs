@@ -14,15 +14,11 @@ use crate::serialize::{write_serialize_impl_for_enum, write_serialize_impl_for_s
 // This value must match the `attributes` attribute for the derive macro.
 const MACRO_ATTRIBUTE: &str = "xml_struct";
 
-/// A macro providing automated derivation of the `XmlSerialize` and
-/// `XmlSerializeAttr` traits.
+/// A macro providing automated derivation of the `XmlSerialize` trait.
 ///
 /// By default, when applied to a struct, the resulting implementation will
 /// serialize each of the struct's fields as an XML element with a tag name
-/// derived from the field's name. When applied to an enum, the implementation
-/// will write an XML element with a tag name derived from the variant's name,
-/// and any fields on that variant will be serialized as children of that
-/// element with tag names derived from the field's name.
+/// derived from the name of the field.
 ///
 /// For example, the following declaration corresponds to the following output:
 ///
@@ -50,7 +46,12 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 /// </Another>
 /// ```
 ///
-/// Likewise, the following enum corresponds to the following output structure:
+/// When applied to an enum, the implementation will write an XML element with a
+/// tag name derived from the name of the variant. Any fields of the variant
+/// will be serialized as children of that  element, with tag names derived from
+/// the name of the field.
+///
+/// As above, the following enum corresponds to the following output:
 ///
 /// ```ignore
 /// #[derive(XmlSerialize)]
@@ -84,12 +85,45 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 /// Unnamed fields, i.e. fields of tuple structs or enum tuple variants, are
 /// serialized without an enclosing element.
 ///
+/// Enums which consist solely of unit variants will also receive an
+/// implementation of the `XmlSerializeAttr` trait.
+///
 /// # Configuration
 ///
 /// The output from derived implementations may be configured with the
-/// `xml_struct` attribute. The following options are available:
+/// `xml_struct` attribute. For example, serializing the following as an element
+/// named "Baz" corresponds to the following output:
+///
+/// ```ignore
+/// #[derive(XmlSerialize)]
+/// #[xml_struct(default_ns = "http://foo.example/")]
+/// struct Baz {
+///     #[xml_struct(flatten)]
+///     some_field: SerializeableType,
+///
+///     #[xml_struct(attribute, ns_prefix = "foo")]
+///     another: String,
+/// }
+///
+/// let foo = Baz {
+///     some_field: SerializeableType {
+///         ...
+///     },
+///     another: String::from("I am text!"),
+/// };
+/// ```
+///
+/// ```text
+/// <Baz foo:Another="I am text!">
+///     ...
+/// </Baz>
+/// ```
+///
+/// The following options are available:
 ///
 /// ## Data Structures
+///
+/// These options affect the serialization of a struct or enum as a whole.
 ///
 /// - `default_ns = "http://foo.example/"`
 ///
@@ -138,6 +172,9 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 ///   text nodes.
 ///
 /// ## Structure Fields
+///
+/// These options affect the serialization of a single field in a struct or enum
+/// variant.
 ///
 /// - `attribute`
 ///

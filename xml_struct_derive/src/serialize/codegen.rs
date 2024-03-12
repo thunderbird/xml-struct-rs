@@ -52,6 +52,8 @@ where
             }
         }
     } else {
+        // In cases where there is no clear text representation of a value, we
+        // provide no derivation of `XmlSerializeAttr`.
         TokenStream::default()
     };
 
@@ -90,8 +92,8 @@ pub(super) struct ImplTokenSets {
     as_attr_body: Option<TokenStream>,
 }
 
-/// Generates the sets of tokens necessary for serializing a struct with the
-/// provided fields.
+/// Creates a generator for the sets of tokens necessary to serialize a struct
+/// with the provided fields.
 pub(super) fn with_struct_fields(
     fields: Vec<Field>,
 ) -> impl FnOnce(&[XmlAttribute]) -> ImplTokenSets {
@@ -124,21 +126,24 @@ pub(super) fn with_struct_fields(
                     Ok(())
                 }
             },
-            child_nodes_body: generate_child_node_calls_for_fields(child_fields),
+            child_nodes_body: generate_field_content_node_calls(child_fields),
 
-            // Only unit-only enums can be serialized as attribute values.
+            // There is no clear text representation of an arbitrary struct, so
+            // we cannot provide an `XmlSerializeAttr` derivation.
             as_attr_body: None,
         }
     }
 }
 
-/// Generates the sets of tokens necessary for serializing a unit enum as text
-/// nodes or attribute values.
+/// Creates a generator for the sets of tokens necessary to serialize a
+/// unit-only enum as text nodes or attribute values.
 pub(super) fn with_text_variants(
     variants: Vec<Ident>,
 ) -> impl FnOnce(&[XmlAttribute]) -> ImplTokenSets {
-    // The property parsing code should guarantee that we have no namespace
-    // attributes to apply, since they don't make sense for text.
+    // While the generator function takes namespace attributes as its argument,
+    // we expect that the consuming code has already verified that there are
+    // none for this enum, since attributes cannot be specified for text content
+    // nodes.
     move |_| {
         let match_arms: Vec<_> = variants
             .iter()
@@ -154,9 +159,8 @@ pub(super) fn with_text_variants(
         ImplTokenSets {
             // No namespaces can be declared on enums which are serialized as
             // text, nor can they contain any attribute fields, so the default
-            // "as element" implementation is sufficient.
+            // implementation of `serialize_as_element()` is sufficient.
             as_element_impl: TokenStream::default(),
-
             child_nodes_body: quote! {
                 #text_from_value
 
@@ -169,14 +173,16 @@ pub(super) fn with_text_variants(
             as_attr_body: Some(quote! {
                 #text_from_value
 
+                // `start_tag` is one of the parameters to the
+                // `serialize_as_attribute()` method.
                 start_tag.push_attribute((name, text));
             }),
         }
     }
 }
 
-/// Generates the sets of tokens necessary for serializing an enum with the
-/// provided variants.
+/// Creates a generator for the sets of tokens necessary to serialize an enum
+/// with the provided variants.
 pub(super) fn with_enum_variants(
     variants: Vec<Variant>,
     ns_prefix: Option<TokenStream>,
@@ -243,7 +249,8 @@ pub(super) fn with_enum_variants(
         ImplTokenSets {
             // No namespaces can be declared directly on the element enclosing
             // an enum value, nor can it be provided with attribute fields, so
-            // the default "as element" impl is sufficient.
+            // the default `serialize_as_element()` implementation is
+            // sufficient.
             as_element_impl: TokenStream::default(),
 
             child_nodes_body: quote! {
@@ -252,7 +259,8 @@ pub(super) fn with_enum_variants(
                 }
             },
 
-            // Only unit-only enums can be serialized as attribute values.
+            // There is no clear text representation of an arbitrary enum
+            // variant, so we cannot provide an `XmlSerializeAttr` derivation.
             as_attr_body: None,
         }
     }
@@ -286,7 +294,7 @@ fn generate_variant_token_sets(
         child_fields,
     } = partition_fields(fields);
 
-    let child_node_calls = generate_child_node_calls_for_fields(child_fields);
+    let child_node_calls = generate_field_content_node_calls(child_fields);
 
     let content_calls = generate_xml_tag_calls(
         name_tokens,
@@ -314,7 +322,8 @@ fn partition_fields(fields: Vec<Field>) -> Fields {
     }
 }
 
-/// Generates calls for adding namespace attributes to an element.
+/// Generates tokens representing a call to add namespace attributes to an
+/// element.
 fn generate_namespace_attrs_call(namespace_attrs: &[XmlAttribute]) -> TokenStream {
     if !namespace_attrs.is_empty() {
         let namespace_attrs: Vec<_> = namespace_attrs
@@ -332,8 +341,7 @@ fn generate_namespace_attrs_call(namespace_attrs: &[XmlAttribute]) -> TokenStrea
     }
 }
 
-/// Generates the calls necessary to serialize struct or enum fields as XML
-/// attributes.
+/// Generates calls to serialize struct or enum fields as XML attributes.
 fn generate_attribute_field_calls(attr_fields: &[Field]) -> TokenStream {
     if !attr_fields.is_empty() {
         attr_fields
@@ -353,8 +361,8 @@ fn generate_attribute_field_calls(attr_fields: &[Field]) -> TokenStream {
     }
 }
 
-/// Generates calls to add a new XML element to the document, including any
-/// necessary attributes.
+/// Generates calls to add a new XML element to a document, including any
+/// necessary attributes and content nodes.
 ///
 /// If `content_calls` is `None`, the XML element will be an empty tag (e.g.,
 /// "<SomeTag/>"). Otherwise, the XML element will enclose any content added to
@@ -366,7 +374,7 @@ fn generate_xml_tag_calls(
     content_calls: Option<TokenStream>,
 ) -> TokenStream {
     let namespaces_call = generate_namespace_attrs_call(namespace_attrs);
-    let field_calls = generate_attribute_field_calls(attr_fields);
+    let attr_calls = generate_attribute_field_calls(attr_fields);
 
     let calls = if let Some(content_calls) = content_calls {
         // If the type has fields to serialize as child elements, wrap them
@@ -398,15 +406,14 @@ fn generate_xml_tag_calls(
         let mut start_tag = ::quick_xml::events::BytesStart::new(#name_tokens)
             #namespaces_call;
 
-        #field_calls
+        #attr_calls
 
         #calls
     }
 }
 
-/// Generates a series of calls for serializing the given fields as XML content
-/// nodes.
-fn generate_child_node_calls_for_fields(child_fields: Vec<Field>) -> TokenStream {
+/// Generates calls to serialize the given fields as XML content nodes.
+fn generate_field_content_node_calls(child_fields: Vec<Field>) -> TokenStream {
     child_fields
         .into_iter()
         .map(|field| {
@@ -493,7 +500,10 @@ fn kebab_to_pascal(kebab: &str) -> String {
 #[derive(Debug)]
 /// A representation of an enum variant.
 pub(crate) struct Variant {
+    // The identifier for the variant.
     pub ident: Ident,
+
+    // The form of the variant, along with any fields.
     pub kind: VariantKind,
 }
 
@@ -508,9 +518,16 @@ pub(crate) enum VariantKind {
 #[derive(Debug)]
 /// A representation of a struct or enum field.
 pub(crate) struct Field {
+    // The form of the field, along with any identifier.
     pub kind: FieldKind,
+
+    // The type of the field.
     pub ty: TokenStream,
+
+    // The tokens used for accessing the field in generated code.
     pub accessor: TokenStream,
+
+    // Properties affecting the serialization of the field.
     pub props: FieldProps,
 }
 

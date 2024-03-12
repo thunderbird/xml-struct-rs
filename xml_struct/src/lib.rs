@@ -18,6 +18,10 @@
 //! not supported (such as serializing enum variants without enclosing XML
 //! elements derived from the variant name).
 //!
+//! Furthermore, the PascalCase implementation is naïve and depends on
+//! [`char::to_ascii_uppercase`], making it unsuitable for use with non-ASCII
+//! identifiers.
+//!
 //! There is also currently no provision for deserialization from XML, as the
 //! support offered by `quick_xml`'s serde implementation has been found to be
 //! sufficient for the time being.
@@ -39,8 +43,66 @@ use thiserror::Error;
 pub use xml_struct_derive::*;
 
 /// A data structure which can be serialized as XML content nodes.
+///
+/// # Usage
+///
+/// The following demonstrates end-to-end usage of `XmlSerialize` with both
+/// derived and manual implementations.
+///
+/// ```
+/// use quick_xml::{
+///     events::{BytesText, Event},
+///     writer::Writer
+/// };
+/// use xml_struct::{Error, XmlSerialize};
+///
+/// #[derive(XmlSerialize)]
+/// #[xml_struct(default_ns = "http://foo.example/")]
+/// struct Foo {
+///     some_field: String,
+///
+///     #[xml_struct(flatten)]
+///     something_else: Bar,
+/// }
+///
+/// enum Bar {
+///     Baz,
+///     Foobar(String),
+/// }
+///
+/// impl XmlSerialize for Bar {
+///     fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
+///     where
+///         W: std::io::Write,
+///     {
+///         match self {
+///             Self::Baz => writer.write_event(Event::Text(BytesText::new("BAZ")))?,
+///             Self::Foobar(foobar) => foobar.serialize_as_element(writer, "Foobar")?,
+///         }
+///
+///         Ok(())
+///     }
+/// }
+///
+/// let mut writer: Writer<Vec<u8>> = Writer::new(Vec::new());
+/// let foo = Foo {
+///     some_field: "foo".into(),
+///     something_else: Bar::Baz,
+/// };
+///
+/// assert!(foo.serialize_as_element(&mut writer, "FlyYouFoo").is_ok());
+///
+/// let out = writer.into_inner();
+/// let out = std::str::from_utf8(&out).unwrap();
+///
+/// assert_eq!(
+///     out,
+///     r#"<FlyYouFoo xmlns="http://foo.example/"><SomeField>foo</SomeField>BAZ</FlyYouFoo>"#,
+/// );
+/// ```
 pub trait XmlSerialize {
-    /// Serializes this value's child content nodes within an enclosing XML element.
+    /// Serializes this value as XML content nodes within an enclosing XML
+    /// element.
     fn serialize_as_element<W>(&self, writer: &mut Writer<W>, name: &str) -> Result<(), Error>
     where
         W: std::io::Write,
@@ -54,7 +116,7 @@ pub trait XmlSerialize {
         Ok(())
     }
 
-    /// Serializes the child content nodes of this value.
+    /// Serializes this value as XML content nodes.
     fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
     where
         W: std::io::Write;

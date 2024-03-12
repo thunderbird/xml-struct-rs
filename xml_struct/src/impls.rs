@@ -12,6 +12,7 @@ use quick_xml::{
 
 use crate::{Error, XmlSerialize, XmlSerializeAttr};
 
+/// Serializes a string as a text content node.
 impl XmlSerialize for str {
     fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
     where
@@ -23,6 +24,7 @@ impl XmlSerialize for str {
     }
 }
 
+/// Serializes a reference to a string as a text content node.
 impl<T> XmlSerialize for &T
 where
     T: AsRef<str>,
@@ -37,6 +39,7 @@ where
     }
 }
 
+/// Serializes a string as a text content node.
 impl XmlSerialize for String {
     fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
     where
@@ -48,6 +51,7 @@ impl XmlSerialize for String {
     }
 }
 
+/// Serializes a string as a text content node.
 impl XmlSerialize for &str {
     fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
     where
@@ -59,6 +63,9 @@ impl XmlSerialize for &str {
     }
 }
 
+/// Serializes the contents of an `Option<T>` as content nodes.
+///
+/// `Some(t)` is serialized identically to `t`, while `None` produces no output.
 impl<T> XmlSerialize for Option<T>
 where
     T: XmlSerialize,
@@ -84,6 +91,10 @@ where
     }
 }
 
+/// Serializes the contents of a `Vec<T>` as content nodes.
+///
+/// Each element of the `Vec` is serialized via its `serialize_child_nodes()`
+/// implementation. If the `Vec` is empty, no output is produced.
 impl<T> XmlSerialize for Vec<T>
 where
     T: XmlSerialize,
@@ -104,12 +115,14 @@ where
     }
 }
 
+/// Serializes a string as an XML attribute value.
 impl XmlSerializeAttr for str {
     fn serialize_as_attribute(&self, start_tag: &mut quick_xml::events::BytesStart, name: &str) {
         start_tag.push_attribute((name, self));
     }
 }
 
+/// Serializes a reference to a string as an XML attribute value.
 impl<T> XmlSerializeAttr for &T
 where
     T: AsRef<str>,
@@ -119,18 +132,23 @@ where
     }
 }
 
+/// Serializes a string as an XML attribute value.
 impl XmlSerializeAttr for String {
     fn serialize_as_attribute(&self, start_tag: &mut quick_xml::events::BytesStart, name: &str) {
         start_tag.push_attribute((name, self.as_str()));
     }
 }
 
+/// Serializes a string as an XML attribute value.
 impl XmlSerializeAttr for &str {
     fn serialize_as_attribute(&self, start_tag: &mut quick_xml::events::BytesStart, name: &str) {
         start_tag.push_attribute((name, *self));
     }
 }
 
+/// Serializes the contents of an `Option<T>` as an XML attribute value.
+///
+/// `Some(t)` is serialized identically to `t`, while `None` produces no output.
 impl<T> XmlSerializeAttr for Option<T>
 where
     T: XmlSerializeAttr,
@@ -153,6 +171,7 @@ where
 macro_rules! impl_as_text_for {
     ($( $ty:ty ),*) => {
         $(
+        /// Serializes an integer as a text content node.
         impl XmlSerialize for $ty {
             fn serialize_child_nodes<W>(&self, writer: &mut Writer<W>) -> Result<(), Error>
             where
@@ -165,6 +184,7 @@ macro_rules! impl_as_text_for {
             }
         }
 
+        /// Serializes an integer as an XML attribute value.
         impl XmlSerializeAttr for $ty {
             fn serialize_as_attribute(
                 &self,
