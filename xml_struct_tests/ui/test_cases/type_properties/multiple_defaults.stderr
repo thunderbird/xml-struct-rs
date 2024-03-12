@@ -1,5 +1,5 @@
 error: cannot declare more than one default namespace
- --> ui/test_cases/type_properties/multiple_defaults.rs:4:87
+ --> ui/test_cases/type_properties/multiple_defaults.rs:8:87
   |
-4 | #[xml_struct(default_ns = "http://foo.example/", ns = ("bar", "http://bar.example/"), default_ns = "http://baz.example/")]
+8 | #[xml_struct(default_ns = "http://foo.example/", ns = ("bar", "http://bar.example/"), default_ns = "http://baz.example/")]
   |                                                                                       ^^^^^^^^^^
