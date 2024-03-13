@@ -31,44 +31,24 @@ pub(crate) fn write_serialize_impl_for_struct(
     // based on struct type and any consumer-applied attributes.
     let fields = match input.fields {
         // Fields in a regular struct, i.e. declared with a name and type.
-        syn::Fields::Named(fields) => {
-            fields
-                .named
-                .into_iter()
-                .map(|field| {
-                    // We should be able to unwrap without panicking, since we
-                    // know these are named fields.
-                    let ident = field.ident.unwrap();
-                    let accessor = quote!(self.#ident);
-
-                    Field {
-                        kind: FieldKind::Named(ident),
-                        ty: field.ty.into_token_stream(),
-                        accessor,
-                        props: FieldProps::try_from_attrs(field.attrs, true)
-                            .unwrap_or_else(collect_field_processing_error(&mut errors)),
-                    }
-                })
-                .collect()
-        }
+        syn::Fields::Named(fields) => fields
+            .named
+            .into_iter()
+            .map(process_named_field(
+                &mut errors,
+                |ident| quote!(self.#ident),
+            ))
+            .collect(),
 
         // Fields in a tuple struct, i.e. declared by type and position only.
         syn::Fields::Unnamed(fields) => fields
             .unnamed
             .into_iter()
             .enumerate()
-            .map(|(idx, field)| {
+            .map(process_unnamed_field(&mut errors, |idx| {
                 let idx_literal = Literal::usize_unsuffixed(idx);
-                let accessor = quote!(self.#idx_literal);
-
-                Field {
-                    kind: FieldKind::Unnamed,
-                    ty: field.ty.into_token_stream(),
-                    accessor,
-                    props: FieldProps::try_from_attrs(field.attrs, false)
-                        .unwrap_or_else(collect_field_processing_error(&mut errors)),
-                }
-            })
+                quote!(self.#idx_literal)
+            }))
             .collect(),
 
         // A unit struct, i.e. one which has no fields.
@@ -158,22 +138,7 @@ fn process_enum_variant(errors: &mut Vec<syn::Error>) -> impl FnMut(syn::Variant
                 let fields = fields
                     .named
                     .into_iter()
-                    .map(|field| {
-                        // We should be able to unwrap without panicking, since we
-                        // know these are named fields.
-                        let ident = field.ident.unwrap();
-                        let accessor = quote!(#ident);
-
-                        let props = FieldProps::try_from_attrs(field.attrs, true)
-                            .unwrap_or_else(collect_field_processing_error(errors));
-
-                        Field {
-                            kind: FieldKind::Named(ident),
-                            ty: field.ty.into_token_stream(),
-                            accessor,
-                            props,
-                        }
-                    })
+                    .map(process_named_field(errors, Ident::to_token_stream))
                     .collect();
 
                 VariantKind::Struct(fields)
@@ -183,20 +148,9 @@ fn process_enum_variant(errors: &mut Vec<syn::Error>) -> impl FnMut(syn::Variant
                     .unnamed
                     .into_iter()
                     .enumerate()
-                    .map(|(idx, field)| {
-                        let idx = Literal::usize_unsuffixed(idx);
-                        let accessor = format_ident!("field{idx}").into_token_stream();
-
-                        let props = FieldProps::try_from_attrs(field.attrs, false)
-                            .unwrap_or_else(collect_field_processing_error(errors));
-
-                        Field {
-                            kind: FieldKind::Unnamed,
-                            ty: field.ty.into_token_stream(),
-                            accessor,
-                            props,
-                        }
-                    })
+                    .map(process_unnamed_field(errors, |idx| {
+                        format_ident!("field{idx}").into_token_stream()
+                    }))
                     .collect();
 
                 VariantKind::Tuple(fields)
@@ -207,6 +161,67 @@ fn process_enum_variant(errors: &mut Vec<syn::Error>) -> impl FnMut(syn::Variant
         Variant {
             ident: variant.ident,
             kind,
+        }
+    }
+}
+
+/// Creates a callback for extracting representation details from a named field
+/// (i.e., a field of a regular struct or a struct enum variant) and its
+/// attributes.
+///
+/// The `accessor_generator` callback should, based on the name of a field,
+/// return an expression for accessing the value of that field (either on `self`
+/// or within a match arm).
+fn process_named_field<'cb, 'g: 'cb, G>(
+    errors: &'cb mut Vec<syn::Error>,
+    mut accessor_generator: G,
+) -> impl FnMut(syn::Field) -> Field + 'cb
+where
+    G: FnMut(&Ident) -> TokenStream + 'g,
+{
+    move |field| {
+        // We should be able to unwrap without panicking, since we know this is
+        // a named field.
+        let ident = field.ident.unwrap();
+        let accessor = accessor_generator(&ident);
+
+        let props = FieldProps::try_from_attrs(field.attrs, true)
+            .unwrap_or_else(collect_field_processing_error(errors));
+
+        Field {
+            kind: FieldKind::Named(ident),
+            ty: field.ty.into_token_stream(),
+            accessor,
+            props,
+        }
+    }
+}
+
+/// Creates a callback for extracting representation details from an unnamed
+/// field (i.e., a field of a tuple struct or a tuple enum variant) and its
+/// attributes.
+///
+/// The `accessor_generator` callback should, based on the position of a field,
+/// return an expression for accessing the value of that field (either on `self`
+/// or within a match arm).
+fn process_unnamed_field<'cb, 'g: 'cb, G>(
+    errors: &'cb mut Vec<syn::Error>,
+    mut accessor_generator: G,
+) -> impl FnMut((usize, syn::Field)) -> Field + 'cb
+where
+    G: FnMut(usize) -> TokenStream + 'g,
+{
+    move |(idx, field)| {
+        let accessor = accessor_generator(idx);
+
+        let props = FieldProps::try_from_attrs(field.attrs, false)
+            .unwrap_or_else(collect_field_processing_error(errors));
+
+        Field {
+            kind: FieldKind::Unnamed,
+            ty: field.ty.into_token_stream(),
+            accessor,
+            props,
         }
     }
 }

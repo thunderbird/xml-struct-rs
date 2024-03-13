@@ -524,7 +524,7 @@ pub(crate) struct Field {
     // The type of the field.
     pub ty: TokenStream,
 
-    // The tokens used for accessing the field in generated code.
+    // An expression which will access the value of the field.
     pub accessor: TokenStream,
 
     // Properties affecting the serialization of the field.
