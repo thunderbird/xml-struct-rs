@@ -67,7 +67,7 @@ pub use xml_struct_derive::*;
 ///
 /// enum Bar {
 ///     Baz,
-///     Foobar(String),
+///     Qux(String),
 /// }
 ///
 /// impl XmlSerialize for Bar {
@@ -77,7 +77,7 @@ pub use xml_struct_derive::*;
 ///     {
 ///         match self {
 ///             Self::Baz => writer.write_event(Event::Text(BytesText::new("BAZ")))?,
-///             Self::Foobar(foobar) => foobar.serialize_as_element(writer, "Foobar")?,
+///             Self::Qux(qux) => qux.serialize_as_element(writer, "Qux")?,
 ///         }
 ///
 ///         Ok(())

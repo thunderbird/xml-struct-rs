@@ -48,7 +48,7 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 ///
 /// When applied to an enum, the implementation will write an XML element with a
 /// tag name derived from the name of the variant. Any fields of the variant
-/// will be serialized as children of that  element, with tag names derived from
+/// will be serialized as children of that element, with tag names derived from
 /// the name of the field.
 ///
 /// As above, the following enum corresponds to the following output:
@@ -114,7 +114,7 @@ const MACRO_ATTRIBUTE: &str = "xml_struct";
 /// ```
 ///
 /// ```text
-/// <Baz foo:Another="I am text!">
+/// <Baz xmlns="http://foo.example/" foo:Another="I am text!">
 ///     ...
 /// </Baz>
 /// ```

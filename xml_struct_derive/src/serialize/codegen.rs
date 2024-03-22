@@ -566,6 +566,8 @@ where
         const fn copy_bytes_into(input: &[u8], mut output: [u8; LEN], offset: usize) -> [u8; LEN] {
             // Copy the input byte-by-byte into the output buffer at the
             // specified offset.
+            // NOTE: If/when `const_for` is stabilized, this can become a `for`
+            // loop. https://github.com/rust-lang/rust/issues/87575
             let mut index = 0;
             loop {
                 output[offset + index] = input[index];
