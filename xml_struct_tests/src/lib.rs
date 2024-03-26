@@ -35,16 +35,11 @@ where
 }
 
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum TestError {
     #[error("error in processing XML document")]
-    XmlStruct {
-        #[from]
-        source: xml_struct::Error,
-    },
+    XmlStruct(#[from] xml_struct::Error),
 
     #[error("serialization produced invalid UTF-8")]
-    Utf8 {
-        #[from]
-        source: std::string::FromUtf8Error,
-    },
+    Utf8(#[from] std::string::FromUtf8Error),
 }

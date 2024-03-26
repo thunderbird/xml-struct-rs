@@ -128,12 +128,10 @@ pub trait XmlSerializeAttr {
     fn serialize_as_attribute(&self, start_tag: &mut BytesStart, name: &str);
 }
 
-#[derive(Debug, Error)]
 /// An error generated during the XML serialization process.
+#[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     #[error("failed to process XML document")]
-    Xml {
-        #[from]
-        source: quick_xml::Error,
-    },
+    Xml(#[from] quick_xml::Error),
 }
