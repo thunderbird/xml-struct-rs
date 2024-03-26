@@ -1,0 +1,17 @@
+error: only unit enums may be derived as text
+ --> ui/test_cases/type_properties/text_struct.rs:8:14
+  |
+8 | #[xml_struct(text)]
+  |              ^^^^
+
+error: only unit enums may be derived as text
+  --> ui/test_cases/type_properties/text_struct.rs:12:14
+   |
+12 | #[xml_struct(text)]
+   |              ^^^^
+
+error: only unit enums may be derived as text
+  --> ui/test_cases/type_properties/text_struct.rs:16:14
+   |
+16 | #[xml_struct(text)]
+   |              ^^^^

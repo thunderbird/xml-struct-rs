@@ -1,0 +1,23 @@
+error: cannot declare namespaces for text content
+ --> ui/test_cases/type_properties/text_enum_with_namespaces.rs:8:1
+  |
+8 | #[xml_struct(text, default_ns = "http://foo.example/")]
+  | ^
+
+error: cannot declare namespaces for text content
+  --> ui/test_cases/type_properties/text_enum_with_namespaces.rs:17:1
+   |
+17 | #[xml_struct(default_ns = "http://foo.example/", text)]
+   | ^
+
+error: cannot declare namespaces for text content
+  --> ui/test_cases/type_properties/text_enum_with_namespaces.rs:26:1
+   |
+26 | #[xml_struct(text, ns = ("foo", "http://foo.example/"))]
+   | ^
+
+error: cannot declare namespaces for text content
+  --> ui/test_cases/type_properties/text_enum_with_namespaces.rs:35:1
+   |
+35 | #[xml_struct(ns = ("foo", "http://foo.example/"), text)]
+   | ^

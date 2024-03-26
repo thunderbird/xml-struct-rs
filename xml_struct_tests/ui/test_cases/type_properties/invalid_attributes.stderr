@@ -1,0 +1,11 @@
+error: unrecognized `xml_struct` attribute
+ --> ui/test_cases/type_properties/invalid_attributes.rs:8:14
+  |
+8 | #[xml_struct(defaut_ns = "http://foo.example/", ns = ("bar", "http://bar.example/"))]
+  |              ^^^^^^^^^
+
+error: unrecognized `xml_struct` attribute
+  --> ui/test_cases/type_properties/invalid_attributes.rs:12:14
+   |
+12 | #[xml_struct(everybody_loves_xml)]
+   |              ^^^^^^^^^^^^^^^^^^^

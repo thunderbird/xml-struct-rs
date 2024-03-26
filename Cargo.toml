@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "xml_struct",
+    "xml_struct_derive",
+    "xml_struct_tests"
+]
