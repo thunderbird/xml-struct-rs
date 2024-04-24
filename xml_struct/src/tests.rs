@@ -4,7 +4,10 @@
 
 #![cfg(test)]
 
+use quick_xml::events::BytesStart;
 use xml_struct_tests::{serialize_value_as_element, serialize_value_children};
+
+use crate::XmlSerializeAttr;
 
 #[test]
 fn string() {
@@ -171,5 +174,69 @@ fn int_as_element() {
     assert_eq!(
         actual, expected,
         "Serializing `u64` should result in bare text content"
+    );
+}
+
+#[test]
+fn bool() {
+    // Test `true` as a content node.
+    let content = true;
+
+    let expected = "true";
+    let actual = serialize_value_children(content).expect("Failed to serialize value");
+
+    assert_eq!(
+        actual, expected,
+        "`true` should be serialized as string value 'true'"
+    );
+
+    // Test `false` as a content node.
+    let content = false;
+
+    let expected = "false";
+    let actual = serialize_value_children(content).expect("Failed to serialize value");
+
+    assert_eq!(
+        actual, expected,
+        "`false` should be serialized as string value 'false'"
+    );
+
+    let element_name = "foo";
+    let attr_name = "bar";
+
+    // Test `true` as an attribute value.
+    let content = true;
+
+    let expected = vec![(attr_name, "true").into()];
+
+    let mut start = BytesStart::new(element_name);
+    content.serialize_as_attribute(&mut start, &attr_name);
+
+    let actual: Vec<_> = start
+        .attributes()
+        .map(|result| result.expect("Failed to get attribute value"))
+        .collect();
+
+    assert_eq!(
+        actual, expected,
+        "`true` should be serialized as string value 'true'"
+    );
+
+    // Test `false` as an attribute value.
+    let content = false;
+
+    let expected = vec![(attr_name, "false").into()];
+
+    let mut start = BytesStart::new(element_name);
+    content.serialize_as_attribute(&mut start, &attr_name);
+
+    let actual: Vec<_> = start
+        .attributes()
+        .map(|result| result.expect("Failed to get attribute value"))
+        .collect();
+
+    assert_eq!(
+        actual, expected,
+        "`false` should be serialized as string value 'false'"
     );
 }
