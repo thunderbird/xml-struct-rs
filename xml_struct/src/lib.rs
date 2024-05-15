@@ -139,5 +139,5 @@ pub enum Error {
     /// serializing it into XML. Its inner type is generic on purpose, as the
     /// specific error type might be defined by a third-party crate.
     #[error("unexpected error when formatting data structure prior to serialization")]
-    Format(#[from] anyhow::Error)
+    Format(#[from] anyhow::Error),
 }
