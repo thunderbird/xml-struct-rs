@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.69"
 quick-xml = "0.31.0"
 thiserror = "1.0.56"
 xml_struct_derive = { version = "0.1.0", path = "../xml_struct_derive" }
