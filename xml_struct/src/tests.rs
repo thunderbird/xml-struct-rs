@@ -112,8 +112,8 @@ fn int_as_content_node() {
         "Serializing `u64` should result in bare text content"
     );
 
-    let actual =
-        serialize_value_children(content as usize).expect("Failed to serialize int as text content");
+    let actual = serialize_value_children(content as usize)
+        .expect("Failed to serialize int as text content");
     assert_eq!(
         actual, expected,
         "Serializing `usize` should result in bare text content"
