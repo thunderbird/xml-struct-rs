@@ -138,6 +138,6 @@ pub enum Error {
     /// An error representing a failure in formatting a data structure prior to
     /// serializing it into XML. Its inner type is generic on purpose, as the
     /// specific error type might be defined by a third-party crate.
-    #[error("unexpected error when formatting data structure prior to serialization")]
-    Format(#[from] anyhow::Error),
+    #[error("failed to format a specific value")]
+    Value(#[from] anyhow::Error),
 }
