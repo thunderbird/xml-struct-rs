@@ -204,9 +204,8 @@ where
     T: XmlSerializeAttr,
 {
     fn serialize_as_attribute(&self, start_tag: &mut quick_xml::events::BytesStart, name: &str) {
-        match self {
-            Some(value) => value.serialize_as_attribute(start_tag, name),
-            None => (),
+        if let Some(value) = self {
+            value.serialize_as_attribute(start_tag, name)
         }
     }
 }
