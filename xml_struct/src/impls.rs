@@ -146,7 +146,7 @@ where
     where
         W: std::io::Write,
     {
-        T::serialize_child_nodes(&self, writer)
+        T::serialize_child_nodes(self, writer)
     }
 
     fn serialize_as_element<W>(&self, writer: &mut Writer<W>, name: &str) -> Result<(), Error>
@@ -159,7 +159,7 @@ where
         // want to forward the call to the implementation for `T`, which may be
         // the default one OR one generated with a `#[derive()]` macro, which
         // might include additional information.
-        T::serialize_as_element(&self, writer, name)
+        T::serialize_as_element(self, writer, name)
     }
 }
 
@@ -218,7 +218,7 @@ where
     T: XmlSerializeAttr,
 {
     fn serialize_as_attribute(&self, start_tag: &mut quick_xml::events::BytesStart, name: &str) {
-        T::serialize_as_attribute(&self, start_tag, name);
+        T::serialize_as_attribute(self, start_tag, name);
     }
 }
 
