@@ -10,7 +10,7 @@ publish = false
 quick-xml = "0.31.0"
 thiserror = "1.0.56"
 trybuild = "1.0.89"
-xml_struct = { version = "0.1.0", path = "../xml_struct" }
+xml_struct = { version = "1.0.0", path = "../xml_struct" }
 
 [[test]]
 name = "integration_tests"
