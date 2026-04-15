@@ -1,6 +1,6 @@
 # `xml_struct`
 
-The `xml_struct` crate is intended to provide simple, flexible, low-boilerplate
+The `xml_struct` crate is intended to provide simple and low-boilerplate
 serialization of Rust data structures to XML.
 
 ## Limitations
