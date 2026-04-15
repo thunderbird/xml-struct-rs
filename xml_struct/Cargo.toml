@@ -11,13 +11,11 @@ license = "MPL-2.0"
 repository = "https://github.com/thunderbird/xml-struct-rs"
 exclude = [".github", ".vscode"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "1.0.69"
 quick-xml = "0.31.0"
 thiserror = "1.0.56"
-xml_struct_derive = { version = "1.0.0", path = "../xml_struct_derive" }
+xml_struct_derive = "1.0.0"
 
 [dev-dependencies]
 xml_struct_tests = { path = "../xml_struct_tests" }

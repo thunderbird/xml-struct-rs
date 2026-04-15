@@ -204,13 +204,24 @@ dependencies = [
  "anyhow",
  "quick-xml",
  "thiserror",
- "xml_struct_derive",
+ "xml_struct_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml_struct_tests",
 ]
 
 [[package]]
 name = "xml_struct_derive"
 version = "1.0.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "xml_struct_derive"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61cd690908caaece5c3593bf67665d653087209a0a758d318fca92f61dc4656d"
 dependencies = [
  "proc-macro2",
  "quote",
