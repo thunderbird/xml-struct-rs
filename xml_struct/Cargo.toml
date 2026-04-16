@@ -2,7 +2,6 @@
 name = "xml_struct"
 version = "1.0.0"
 edition = "2021"
-authors = ["The Thunderbird Project Developers"]
 description = "Simple, low-boilerplate serialization of Rust data structures to XML."
 categories = ["encoding"]
 keywords = ["xml", "serialization"]
