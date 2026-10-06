@@ -1,13 +1,13 @@
 [package]
 name = "xml_struct_tests"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-quick-xml = "0.31.0"
+quick-xml = "0.41.0"
 thiserror = "1.0.56"
 trybuild = "1.0.89"
 xml_struct = { version = "1.0.0", path = "../xml_struct" }

@@ -52,9 +52,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.31.0"
+version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1004a344b30a54e2ee58d66a71b32d2db2feb0a31f9a2d302bf0536f15de2a33"
+checksum = "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1"
 dependencies = [
  "memchr",
 ]
@@ -199,7 +199,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "xml_struct"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anyhow",
  "quick-xml",
@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "xml_struct_tests"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "quick-xml",
  "thiserror",
